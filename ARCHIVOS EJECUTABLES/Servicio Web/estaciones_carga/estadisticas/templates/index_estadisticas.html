@@ -1,0 +1,515 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<link rel="icon" href="{% static 'icons/circle-water-plug-svgrepo-com.svg' %}" type="image/svg+xml">
+		<link rel="stylesheet" href="{% static 'css/index.css' %}" />
+		<link rel="stylesheet" href="{% static 'css/estilos_parametros.css' %}" />
+
+		<script src="{% static 'js/scripts.js' %}"></script>
+
+		<title>Estaciones de Carga</title>
+	</head>
+
+	<body>
+
+
+		<!-- Encabezado -->
+		<section style="background-color: #FFFF;">
+			<div>
+				<h1 class="centered-title">
+					<img src="{% static 'icons/battery-bolt-svgrepo-com.svg' %}" width="55" height="55" style="margin-right: 16px;">
+					Estaciones de Carga
+				</h1>
+			</div>
+		</section>
+
+
+		<!-- Contenedor de la página -->
+		<div class="demo-page" >
+
+
+			<!-- Bloque de navegación -->
+			<div class="demo-page-navigation" >
+
+				<nav>
+					<ul>
+						<li>
+							<a href="{% url 'inicio' %}" onclick="localStorage.setItem('lastSelectedSection', 'seccion_estadisticas')">
+								<img src="{% static 'icons/house-chimney-blank-svgrepo-com.svg' %}" width="24" height="24" style="margin-right: 15px;">
+								Inicio
+							</a>
+						</li>
+					</ul>
+				</nav>
+
+				<br>
+
+				<nav style="top: 7em;">
+					<ul>
+						<li>
+							<a href="#" data-section="seccion_estadisticas">
+								<img src="{% static 'icons/chart-pie-alt-1-svgrepo-com.svg' %}" width="24" height="24" style="margin-right: 15px;">
+								Estadísticas
+							</a>
+						</li>
+					</ul>
+					<ul>
+						<li>
+							<a href="#" data-section="seccion_sesiones">
+								<img src="{% static 'icons/timer-svgrepo-com.svg' %}" width="24" height="24" style="margin-right: 15px;">
+								Sesiones de carga
+							</a>
+						</li>
+					</ul>
+					<ul>
+						<li>
+							<a href="#" data-section="seccion_tarifas">
+								<img src="{% static 'icons/circle-dollar-svgrepo-com.svg' %}" width="24" height="24" style="margin-right: 15px;">
+								Tarifas
+							</a>
+						</li>
+					</ul>
+					<ul>
+						<li>
+							<a href="#" data-section="seccion_nueva_tarifa">
+								<img src="{% static 'icons/circle-dollar-svgrepo-com.svg' %}" width="24" height="24" style="margin-right: 15px;">
+								Nueva Tarifa
+							</a>
+						</li>
+					</ul>
+				</nav>
+			</div>
+
+
+			<!-- Tablas de información -->
+			<main class="demo-page-content" style="width: 100%">
+
+
+				<!-- Sección "Estadísticas" -->
+				<section id='seccion_estadisticas'>
+
+					<div>
+						<h1 style="color:black;font-size:35px;text-align: center;">
+							Estadísticas
+						</h1>
+						<p style="font-size:17px;text-align: left;margin: 30px;">
+							Analiza el resumen de datos estadísticos de todas las estaciones de la red.
+						</p>
+					</div>
+
+					<div>
+						<table>
+							<tr>
+								<th>
+									Total de sesiones
+								</th>
+							</tr>
+
+							<tr>
+								<td>{{num_sesiones}}</td>
+							</tr>
+
+						</table>
+					</div>
+
+					<details>
+						<summary style="display: flex; justify-content: flex-end;">
+							<br>
+						</summary>
+					</details>
+
+				</section>
+
+				<!-- Sección "Sesiones de Carga" -->
+				<section id='seccion_sesiones' style="display:none">
+
+					<div>
+						<h1 style="color:black;font-size:35px;text-align: center;">
+							Sesiones de carga
+						</h1>
+						<p style="font-size:17px;text-align: left;margin: 30px;">
+							Analiza el registro de sesiones de carga de las estaciones, filtrando por la estación de tu interés.
+						</p>
+					</div>
+
+
+					<form id="select_sesiones" method="post" action="">
+						<!-- Datos de formulario ocultos, necesarios para la solicitud POST -->
+						{% csrf_token %}
+						<input form="select_sesiones" type="hidden"
+								id="id_formulario"
+								name="id_formulario"
+								value="1"
+						>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="estacion">Filtrar por estación:</label>
+							<select form="select_sesiones" id="estacion" name="estacion" onchange="this.form.submit()">
+								<option value="">Todas</option>
+								{% for estacion in estaciones %}
+								<option value="{{ estacion.id }}" {% if estacion.id|stringformat:"s" == request.POST.estacion %}selected{% endif %}>
+									{{ estacion.nombre }}
+								</option>
+								{% endfor %}
+							</select>
+						</div>
+					</form>
+
+					<div>
+						<table>
+							<tr>
+								<th colspan="6">
+									<h1 style="color:white;text-align: center;margin: 0px">
+										{%if request.POST.estacion %}
+											{% for estacion in estaciones %}
+												{% if estacion.id|stringformat:"s" == request.POST.estacion%}
+													Sesiones de carga de &#34;{{estacion.nombre}}&#34;
+												{% endif %}
+											{% endfor %}
+										{% else %}
+											Sesiones de carga
+										{% endif %}
+									</h1>
+								</th>
+							</tr>
+							<tr>
+								<th>
+									ID
+								</th>
+								<th>
+									Estación
+								</th>
+								<th>
+									Fecha de inicio
+								</th>
+								<th>
+									Fecha de fin
+								</th>
+								<th>
+									Gráficas
+								</th>
+								<th>
+									Recibo
+								</th>
+							</tr>
+							{% if not sesiones %}
+								<tr>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+								</tr>
+							{% else %}
+								{% for sesion in sesiones %}
+									<form id="grafica_sesion_{{sesion.id}}" method="post" action="" onsubmit="localStorage.setItem('lastSelectedSection', 'seccion_graficas')">
+										<!-- Datos de formulario ocultos, necesarios para la solicitud POST -->
+										{% csrf_token %}
+										<input form="grafica_sesion_{{sesion.id}}" type="hidden"
+												id="id_formulario"
+												name="id_formulario"
+												value="4"
+										>
+										<input form="grafica_sesion_{{sesion.id}}" type="hidden"
+												id="id_estacion_grafica"
+												name="id_estacion_grafica"
+												value="{{sesion.id_estacion.id}}"
+										>
+										<input form="grafica_sesion_{{sesion.id}}" type="hidden"
+												id="fecha_inicio_grafica"
+												name="fecha_inicio_grafica"
+												value="{{sesion.fecha_inicio|date:"Y-m-d H:i:s"}}"
+										>
+										<input form="grafica_sesion_{{sesion.id}}" type="hidden"
+												id="fecha_fin_grafica"
+												name="fecha_fin_grafica"
+												value="{{sesion.fecha_fin|date:"Y-m-d H:i:s"}}"
+										>
+									</form>
+
+									<form id="recibo_sesion_{{sesion.id}}" method="post" action="{% url 'generar_pdf' %}" onsubmit="localStorage.setItem('lastSelectedSection', 'seccion_sesiones')">
+										<!-- Datos de formulario ocultos, necesarios para la solicitud POST -->
+										{% csrf_token %}
+										<input form="recibo_sesion_{{sesion.id}}" type="hidden"
+											id="id_sesion_recibo"
+											name="id_sesion_recibo"
+											value="{{sesion.id}}"
+										>
+									</form>
+
+									<tr>
+										<td>{{sesion.id}}</td>
+										<td>{{sesion.id_estacion.nombre}}</td>
+										<td>{{sesion.fecha_inicio}}</td>
+										<td>{{sesion.fecha_fin}}</td>
+										<td><input class="red-button" style="min-width: fit-content;" type="submit" value="Ver" form="grafica_sesion_{{sesion.id}}"></td>
+										<td><input class="red-button" style="min-width: fit-content;" type="submit" value="PDF" form="recibo_sesion_{{sesion.id}}"></td>
+									</tr>
+								{% endfor %}
+							{% endif %}
+						</table>
+					</div>
+
+					<details>
+						<summary style="display: flex; justify-content: flex-end;">
+							<br>
+						</summary>
+					</details>
+
+				</section>
+
+				<!-- Sección "Tarifas" -->
+				<section id='seccion_tarifas' style="display:none">
+
+					<div>
+						<h1 style="color:black;font-size:35px;text-align: center;">
+							Tarifas
+						</h1>
+						<p style="font-size:17px;text-align: left;margin: 30px;">
+							Consulta la base de datos de tarifas y realiza las operaciones de actualización y asignación.
+						</p>
+					</div>
+
+
+					<form id="select_tarifas" method="post" action="">
+						<!-- Datos de formulario ocultos, necesarios para la solicitud POST -->
+						{% csrf_token %}
+						<input form="select_tarifas" type="hidden"
+								id="id_formulario"
+								name="id_formulario"
+								value="2"
+						>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="tarifa">Filtrar por tarifa:</label>
+							<select form="select_tarifas" id="tarifa" name="tarifa" onchange="this.form.submit()">
+								<option value="">Todas</option>
+								{% for tarifa in tarifas %}
+								<option value="{{ tarifa.id }}" {% if tarifa.id|stringformat:"s" == request.POST.tarifa %}selected{% endif %}>
+									{{ tarifa.descripcion }}
+								</option>
+								{% endfor %}
+							</select>
+						</div>
+					</form>
+
+					<div>
+						<table>
+							<tr>
+								<th colspan="4">
+									<h1 style="color:white;text-align: center;margin: 0px">
+										{%if request.POST.tarifa %}
+											{% for tarifa in tarifas %}
+												{% if tarifa.id|stringformat:"s" == request.POST.tarifa%}
+													Tarifa &#34;{{tarifa.descripcion}}&#34;
+												{% endif %}
+											{% endfor %}
+										{% else %}
+											Tarifas
+										{% endif %}
+									</h1>
+								</th>
+							</tr>
+							<tr>
+								<th>
+									ID
+								</th>
+								<th>
+									Descripción
+								</th>
+								<th>
+									Monto
+								</th>
+								<th>
+									Moneda
+								</th>
+							</tr>
+							{% if not tarifas %}
+								<tr>
+									<td></td>
+									<td></td>
+									<td></td>
+									<td></td>
+								</tr>
+							{% else %}
+								{% for tarifa in tarifas %}
+									<tr>
+										<td>{{tarifa.id}}</td>
+										<td>{{tarifa.descripcion}}</td>
+										<td>{{tarifa.precio}}</td>
+										<td>{{tarifa.moneda}}</td>
+									</tr>
+								{% endfor %}
+							{% endif %}
+						</table>
+					</div>
+
+					<details>
+						<summary style="display: flex; justify-content: flex-end;">
+							<a {% if request.POST.tarifa %}href="#" data-section="seccion_modifica_tarifa"{% endif %} class="red-button" >
+								<img src="{% static 'icons/file-plus-alt-svgrepo-com.svg' %}" width="24" height="24">
+								<span class="text">Modificar</span>
+							</a>
+						</summary>
+					</details>
+
+				</section>
+
+				<!-- Sección "Modificar Tarifas" -->
+				<section id='seccion_modifica_tarifa' style="display:none">
+
+					<div>
+						<h1 style="color:black;font-size:35px;text-align: center;">
+							Modificar tarifa
+						</h1>
+						<p style="font-size:17px;text-align: left;margin: 30px;">
+							Modifica los parámetros de las tarifas.
+						</p>
+					</div>
+
+
+					<form id="form_modifica_tarifa" method="post" action="" onsubmit="localStorage.setItem('lastSelectedSection', 'seccion_tarifas')">
+						<!-- Datos de formulario ocultos, necesarios para la solicitud POST -->
+						{% csrf_token %}
+						<input form="form_modifica_tarifa" type="hidden"
+								id="id_formulario"
+								name="id_formulario"
+								value="3"
+						>
+						<input form="form_modifica_tarifa" type="hidden"
+								id="tarifa"
+								name="tarifa"
+								value="{% for tarifa in tarifas %}{% if tarifa.id|stringformat:"s" == request.POST.tarifa %}{{tarifa.id}}{% endif %}{% endfor %}"
+						>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="descripcion_tarifa">Descripción</label>
+							<input type="text" id="descripcion_tarifa" name="descripcion_tarifa" form="form_modifica_tarifa" placeholder="Agrega una descripción" value="{% for tarifa in tarifas %}{% if tarifa.id|stringformat:"s" == request.POST.tarifa %}{{tarifa.descripcion}}{% endif %}{% endfor %}" required>
+						</div>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="precio_tarifa">Precio</label>
+							&#09;$ &#09;<input type="number" id="precio_tarifa" name="precio_tarifa" form="form_modifica_tarifa" step="0.01" placeholder="5.99" value="{% for tarifa in tarifas %}{% if tarifa.id|stringformat:"s" == request.POST.tarifa %}{{tarifa.precio}}{% endif %}{% endfor %}" min="0" max="999.99" required>
+						</div>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="moneda_tarifa">Moneda</label>
+							<input type="text" id="moneda_tarifa" name="moneda_tarifa" form="form_modifica_tarifa" placeholder="MXN" value="{% for tarifa in tarifas %}{% if tarifa.id|stringformat:"s" == request.POST.tarifa %}{{tarifa.moneda}}{% endif %}{% endfor %}" required maxlength="3">
+						</div>
+					</form>
+
+					<details>
+						<summary style="display: flex; justify-content: flex-end;">
+							<button type="submit" form="form-eliminar" style="min-width: fit-content;margin-right: 10px;background-color: #D63A13;border: 2px solid #B91311;" class="red-button">
+								Eliminar
+							</button>
+							<button type="submit" form="form_modifica_tarifa" style="min-width: fit-content" class="red-button">
+								Guardar cambios
+							</button>
+						</summary>
+					</details>
+
+				</section>
+				
+				<!-- Sección "Nueva Tarifa" -->
+				<section id='seccion_nueva_tarifa' style="display:none">
+
+					<div>
+						<h1 style="color:black;font-size:35px;text-align: center;">
+							Nueva tarifa
+						</h1>
+						<p style="font-size:17px;text-align: left;margin: 30px;">
+							Crea una nueva tarifa.
+						</p>
+					</div>
+
+
+					<form id="form_nueva_tarifa" method="post" action="" onsubmit="localStorage.setItem('lastSelectedSection', 'seccion_tarifas')">
+						<!-- Datos de formulario ocultos, necesarios para la solicitud POST -->
+						{% csrf_token %}
+						<input form="form_nueva_tarifa" type="hidden"
+								id="id_formulario"
+								name="id_formulario"
+								value="5"
+						>
+						<input form="form_nueva_tarifa" type="hidden"
+								id="tarifa"
+								name="tarifa"
+								value="{% for tarifa in tarifas %}{% if tarifa.id|stringformat:"s" == request.POST.tarifa %}{{tarifa.id}}{% endif %}{% endfor %}"
+						>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="descripcion_tarifa">Descripción</label>
+							<input type="text" id="descripcion_tarifa" name="descripcion_tarifa" form="form_nueva_tarifa" placeholder="Agrega una descripción" value="" required>
+						</div>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="precio_tarifa">Precio</label>
+							&#09;$ &#09;<input type="number" id="precio_tarifa" name="precio_tarifa" form="form_nueva_tarifa" step="0.01" placeholder="5.99" value="" min="0" max="999.99" required>
+						</div>
+						<div class="nice-form-group" style="margin: 5%">
+							<label for="moneda_tarifa">Moneda</label>
+							<input type="text" id="moneda_tarifa" name="moneda_tarifa" form="form_nueva_tarifa" placeholder="MXN" value="" required minlength="3" maxlength="3">
+						</div>
+					</form>
+					
+					<form onsubmit="localStorage.setItem('lastSelectedSection', 'seccion_tarifas')" id="form-eliminar" method="post">
+						{% csrf_token %}
+						<!-- Datos por fila ocultos, necesarios para la solicitud POST -->
+						<input form="form-eliminar" type="hidden"
+							id="id_formulario"
+							name="id_formulario"
+							value="6"
+						>
+						<input form="form-eliminar" type="hidden"
+							id="id_tarifa_eliminar"
+							name="id_tarifa_eliminar"
+							value="{% for tarifa in tarifas %}{% if tarifa.id|stringformat:'s' == request.POST.tarifa %}{{tarifa.id}}{% endif %}{% endfor %}"
+						>
+					</form>
+
+					<details>
+						<summary style="display: flex; justify-content: flex-end;">
+							<button type="submit" form="form_nueva_tarifa" style="min-width: fit-content" class="red-button">
+								Guardar cambios
+							</button>
+						</summary>
+					</details>
+
+				</section>
+
+
+				<!-- Sección "Gráficas" -->
+				<section id='seccion_graficas'style="display:none">
+
+					<div>
+						<h1 style="color:black;font-size:35px;text-align: center;">
+							Gráficas
+						</h1>
+						<p style="font-size:17px;text-align: left;margin: 30px;">
+							Analiza las gráficas correspondientes a cada medición de la sesión que seleccionaste.
+						</p>
+					</div>
+
+
+					{% if request.POST.id_formulario == '4' %}
+						{% for id_medicion_grafica in "123456789" %}
+						<div style="margin: 5%;">
+							<img src="{% url 'grafica_mediciones' id_estacion=request.POST.id_estacion_grafica id_medicion=id_medicion_grafica fecha_inicio=request.POST.fecha_inicio_grafica fecha_fin=request.POST.fecha_fin_grafica %}" alt="Gráfica de Mediciones">
+						</div>
+						{% endfor %}
+					{% endif %}
+
+				</section>
+
+			</main>
+
+		</div>
+
+
+		{% if mensaje %}
+			<script>
+				alert(" {{ mensaje }} ");
+			</script>
+		{% endif %}
+
+	</body>
+</html>
